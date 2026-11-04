@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 방언 번역 연구소</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #2563eb;
+      --success: #059669;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      word-break: keep-all;
+    }
+
+    body {
+      font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e3a8a);
+      color: #ffffff;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid #3b82f6;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .badge-version {
+      background-color: #38bdf8;
+      color: #0f172a;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 20px;
+    }
+
+    .stage-card {
+      display: none;
+      width: 100%;
+      max-width: 920px;
+      background: var(--card);
+      border-radius: 28px;
+      padding: 38px 44px;
+      border: 2px solid #cbd5e1;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+      animation: fadeUp 0.35s ease-out;
+    }
+
+    .stage-card.active {
+      display: block;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: var(--primary);
+      font-size: 15px;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .stage-title {
+      font-size: 29px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .stage-desc {
+      font-size: 17px;
+      color: var(--muted);
+      margin-bottom: 22px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    select, input[type="text"] {
+      font-family: inherit;
+      font-size: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 2px solid #94a3b8;
+      background: #f8fafc;
+      color: var(--text);
+      font-weight: 700;
+      width: 100%;
+    }
+
+    select:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 20px;
+      font-weight: 800;
+      padding: 18px 28px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary-light);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    .btn-success:hover {
+      background: #047857;
+      transform: translateY(-2px);
+    }
+
+    .sync-badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mission-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fffbeb;
+      border: 2px solid #fcd34d;
+      padding: 14px 20px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #92400e;
+    }
+
+    .mission-status-bar.all-done {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .table-wrap {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 16px;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #eff6ff;
+      color: var(--primary);
+      font-weight: 800;
+      padding: 14px 12px;
+      text-align: left;
+      border-bottom: 2px solid #bfdbfe;
+      z-index: 1;
+    }
+
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      font-weight: 700;
+    }
+
+    tr.unclassified-row td {
+      background-color: #fefce8;
+    }
+
+    .tendency-select {
+      font-size: 15px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 2px solid #cbd5e1;
+      width: 100%;
+      font-weight: 700;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .tendency-select.needs-input {
+      border-color: #f59e0b;
+      background-color: #fffbeb;
+      color: #b45309;
+      font-weight: 800;
+    }
+
+    .chart-box {
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-bar-group {
+      margin-bottom: 16px;
+    }
+
+    .chart-bar-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .chart-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 28px;
+      background: #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 14px;
+      transition: width 0.6s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .auto-train-box {
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .train-progress-bar {
+      width: 100%;
+      height: 16px;
+      background: #334155;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 16px 0 10px;
+    }
+
+    .train-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #22c55e);
+      transition: width 0.3s ease;
+    }
+
+    .translator-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .trans-card {
+      background: #f8fafc;
+      border: 3px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 22px 26px;
+    }
+
+    .trans-card.result-card {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .trans-label {
+      font-size: 16px;
+      font-weight: 800;
+      color: #475569;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      resize: none;
+      line-height: 1.4;
+    }
+
+    textarea:focus {
+      outline: none;
+    }
+
+    .result-output {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 640px) {
+      .stage-card { padding: 26px 18px; }
+      .stage-title { font-size: 23px; }
+      textarea, .result-output { font-size: 22px; }
+      .mission-status-bar { flex-direction: column; gap: 6px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>🏢 AI 방언 번역 연구소</span>
+      <span class="badge-version">실시간 시트 연동 엔진 v3.6</span>
+    </div>
+    <div style="font-size: 16px; font-weight: 700; color: #fde047;" id="headerRegionText">
+      연구 대기 중
+    </div>
+  </header>
+
+  <main>
+    <!-- ==========================================
+         STAGE 1: 시작하기 (구글 시트 링크 붙여넣기)
+         ========================================== -->
+    <section class="stage-card active" id="stage1">
+      <span class="step-badge">STEP 1. 정제된 시트 연결하기</span>
+      <h1 class="stage-title">우리 모둠의 구글 스프레드시트 링크를 넣어 주세요!</h1>
+      <p class="stage-desc">
+        1차시에서 오류를 고친 시트 우측 상단의 <strong>[공유] ➔ [링크 복사]</strong>를 누른 뒤, 아래 칸에 붙여넣어 주세요.
+      </p>
+
+      <div class="input-group">
+        <select id="regionSelect">
+          <option value="gw">1모둠: 강원도 방언 데이터</option>
+          <option value="cc">2모둠: 충청도 방언 데이터</option>
+          <option value="jl">3모둠: 전라도 방언 데이터</option>
+          <option value="gs">4모둠: 경상도 방언 데이터</option>
+          <option value="jj">5모둠: 제주도 방언 데이터</option>
+        </select>
+        <input type="text" id="sheetUrlInput" placeholder="여기에 복사한 구글 스프레드시트 공유 링크를 붙여넣으세요!">
+      </div>
+
+      <p id="linkAlertMsg" style="color: #dc2626; font-weight: 700; margin-bottom: 14px; display: none;"></p>
+
+      <button class="btn btn-primary" id="loadSheetBtn" onclick="connectSheetAndGoStage2()">
+        🚀 시트 데이터 불러오기
+      </button>
+    </section>
+
+    <!-- ==========================================
+         STAGE 2: 웹 앱 내에서 10개 미분류 드롭다운 완성하기
+         ========================================== -->
+    <section class="stage-card" id="stage2">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <span class="step-badge">STEP 2. 방언 경향성 분류 미션 (총 10개)</span>
+        <span class="sync-badge" id="syncStatusBadge">🔗 구글 시트 연동 완료</span>
+      </div>
+      <h2 class="stage-title">비어 있는 10개의 (미분류) 칸을 드롭다운으로 채워 주세요!</h2>
+      <p class="stage-desc">
+        시트에서 불러온 단어 중 20개는 이미 분류되어 있어요. 노란색으로 표시된 <strong>10개의 (미분류) 단어</strong>가 어떤 규칙으로 바뀌었는지 선택해 보세요!
+      </p>
+
+      <div class="mission-status-bar" id="missionStatusBar">
+        <span id="missionStatusText">🔍 아직 분류하지 않은 단어가 <strong>10개</strong> 남았어요!</span>
+        <span style="font-size: 14px; opacity: 0.85;">표준어와 방언의 글자를 비교해 보세요</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;">번호</th>
+              <th style="width: 110px;">분류</th>
+              <th>표준어</th>
+              <th>방언 (시트 데이터)</th>
+              <th style="width: 290px;">방언 경향성 (규칙 선택)</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+
+      <p id="stage2AlertMsg" style="color: #dc2626; font-weight: 800; margin-bottom: 12px; display: none; text-align: center;"></p>
+
+      <button class="btn btn-primary" onclick="checkDropdownsAndStartTrain()">
+        📊 10개 분류 완료! 경향성 분석 및 AI 학습 시작하기 ➔
+      </button>
+    </section>
+
+    <!-- ==========================================
+         STAGE 3: 경향성 분석 -> AI 모델 실제 기계 학습
+         ========================================== -->
+    <section class="stage-card" id="stage3">
+      <span class="step-badge">STEP 3. 경향성 분석 & AI 학습</span>
+      <h2 class="stage-title" id="stage3Title">여러분이 완성한 데이터의 경향성 분석 결과입니다!</h2>
+      <p class="stage-desc" id="stage3Desc">
+        표준어 사전이 내장된 AI 모델에 우리 모둠의 방언 데이터와 경향성 규칙을 학습시킵니다.
+      </p>
+
+      <div class="chart-box">
+        <div class="chart-bar-group">
+          <div class="chart-label">
+            <span style="color: #1d4ed8;">① 모음(ㅏ,ㅓ,ㅗ,ㅜ,ㅣ)이 바뀌어요</span>
+            <span id="statCount1">0개 (0%)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="statBar1" style="width: 0%; background: #3b82f6;"></div>
+          </div>
+        </div>
+
+        <div class="chart-bar-group">
+          <div class="chart-label">
+            <span style="color: #047857;">② 자음이나 글자가 덧생겨요</span>
+            <span id="statCount2">0개 (0%)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="statBar2" style="width: 0%; background: #10b981;"></div>
+          </div>
+        </div>
+
+        <div class="chart-bar-group">
+          <div class="chart-label">
+            <span style="color: #b45309;">③ 단어 모양이 완전히 달라져요</span>
+            <span id="statCount3">0개 (0%)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="statBar3" style="width: 0%; background: #f59e0b;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auto-train-box">
+        <div style="font-size: 20px; font-weight: 800;" id="trainStatusMsg">
+          🧠 표준어 AI 모델에 시트의 방언 데이터를 결합하는 중...
+        </div>
+        <div class="train-progress-bar">
+          <div class="train-progress-fill" id="trainProgressFill"></div>
+        </div>
+        <div style="font-size: 15px; color: #94a3b8; font-weight: 600;" id="trainSubLog">
+          데이터 준비 중...
+        </div>
+      </div>
+
+      <button class="btn btn-success" id="goLabBtn" style="margin-top: 22px; display: none;" onclick="goToStage(4)">
+        🎉 기계 학습 완료! AI 방언 번역 실험실 입장하기 ➔
+      </button>
+    </section>
+
+    <!-- ==========================================
+         STAGE 4: 실전 테스트 실험실 (순수 번역 결과만 표시)
+         ========================================== -->
+    <section class="stage-card" id="stage4">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span class="step-badge" style="margin-bottom: 0;">STEP 4. AI 방언 번역기 실험실</span>
+        <button onclick="goToStage(2)" style="background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer; font-size: 14px;">
+          🔄 드롭다운 데이터 다시 보기
+        </button>
+      </div>
+      <h2 class="stage-title">선생님 화면(PPT)의 미션 문장을 입력해 보세요!</h2>
+      <p class="stage-desc">
+        방언 문장을 입력하고 <strong>[AI 표준어 번역 실행하기]</strong> 버튼을 누르면 번역 결과가 출력됩니다.
+      </p>
+
+      <div class="translator-stack">
+        <div class="trans-card">
+          <div class="trans-label">
+            <span id="labInputTitle">🎙️ 방언 입력</span>
+            <button onclick="resetTranslator()" style="background: #e2e8f0; border: none; padding: 4px 12px; border-radius: 8px; font-weight: 700; cursor: pointer;">지우기</button>
+          </div>
+          <textarea id="dialectInput" placeholder="여기에 방언 단어나 문장을 입력해 보세요!"></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="runTranslation()">
+          🔊 AI 표준어 번역 실행하기
+        </button>
+
+        <div class="trans-card result-card">
+          <div class="trans-label">
+            <span>🤖 AI 표준어 번역 결과</span>
+          </div>
+          <div class="result-output" id="translationOutput" style="color: #94a3b8; font-size: 22px;">
+            번역할 문장을 입력하고 [번역 실행하기] 버튼을 눌러 주세요.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 30개 중 골고루 섞인 10개 인덱스(0-based: 1, 3, 6, 9, 12, 15, 19, 23, 26, 30번 단어)를 (미분류)로 지정
+    const UNCLASSIFIED_INDICES = new Set([0, 2, 5, 8, 11, 14, 18, 22, 25, 29]);
+
+    const RULE_1 = "① 모음(ㅏ,ㅓ,ㅗ,ㅜ,ㅣ)이 바뀌어요";
+    const RULE_2 = "② 자음이나 글자가 덧생겨요";
+    const RULE_3 = "③ 단어 모양이 완전히 달라져요";
+
+    // 올려주신 5개 권역 실제 CSV 파일의 1~30번 정답 방언 데이터 완벽 반영
+    const REGION_DATASETS = {
+      gw: {
+        name: "1모둠 (강원도 방언)",
+        words: [
+          { id: 1, cat: "채소/음식", std: "감자", dia: "감재", defaultRule: RULE_1 },
+          { id: 2, cat: "채소/음식", std: "고구마", dia: "고구메", defaultRule: RULE_1 },
+          { id: 3, cat: "채소/음식", std: "옥수수", dia: "강냉이", defaultRule: RULE_3 },
+          { id: 4, cat: "채소/음식", std: "부추", dia: "분추", defaultRule: RULE_2 },
+          { id: 5, cat: "채소/음식", std: "파", dia: "패", defaultRule: RULE_1 },
+          { id: 6, cat: "채소/음식", std: "고추", dia: "고치", defaultRule: RULE_1 },
+          { id: 7, cat: "채소/음식", std: "무", dia: "무우", defaultRule: RULE_2 },
+          { id: 8, cat: "채소/음식", std: "배추", dia: "배차", defaultRule: RULE_1 },
+          { id: 9, cat: "채소/음식", std: "상추", dia: "부루", defaultRule: RULE_3 },
+          { id: 10, cat: "채소/음식", std: "간장", dia: "장물", defaultRule: RULE_3 },
+          { id: 11, cat: "채소/음식", std: "두부", dia: "조포", defaultRule: RULE_3 },
+          { id: 12, cat: "채소/음식", std: "김치", dia: "짐치", defaultRule: RULE_2 },
+          { id: 13, cat: "채소/음식", std: "누룽지", dia: "누름지", defaultRule: RULE_2 },
+          { id: 14, cat: "채소/음식", std: "보리", dia: "보리쌀", defaultRule: RULE_2 },
+          { id: 15, cat: "동물/곤충", std: "강아지", dia: "강생이", defaultRule: RULE_3 },
+          { id: 16, cat: "동물/곤충", std: "고양이", dia: "고냉이", defaultRule: RULE_2 },
+          { id: 17, cat: "동물/곤충", std: "송아지", dia: "송아치", defaultRule: RULE_2 },
+          { id: 18, cat: "동물/곤충", std: "병아리", dia: "벵아리", defaultRule: RULE_1 },
+          { id: 19, cat: "동물/곤충", std: "개구리", dia: "개구락지", defaultRule: RULE_2 },
+          { id: 20, cat: "동물/곤충", std: "지렁이", dia: "지렝이", defaultRule: RULE_1 },
+          { id: 21, cat: "동물/곤충", std: "하루살이", dia: "날파리", defaultRule: RULE_3 },
+          { id: 22, cat: "동물/곤충", std: "우렁이", dia: "골뱅이", defaultRule: RULE_3 },
+          { id: 23, cat: "동물/곤충", std: "다슬기", dia: "꼴팽이", defaultRule: RULE_3 },
+          { id: 24, cat: "동물/곤충", std: "매미", dia: "매암이", defaultRule: RULE_2 },
+          { id: 25, cat: "동물/곤충", std: "여우", dia: "여수", defaultRule: RULE_2 },
+          { id: 26, cat: "생활/자연", std: "가위", dia: "가새", defaultRule: RULE_1 },
+          { id: 27, cat: "생활/자연", std: "그네", dia: "그늘", defaultRule: RULE_2 },
+          { id: 28, cat: "생활/자연", std: "주머니", dia: "호주머니", defaultRule: RULE_2 },
+          { id: 29, cat: "생활/자연", std: "그늘", dia: "응달", defaultRule: RULE_3 },
+          { id: 30, cat: "생활/자연", std: "거미", dia: "거무", defaultRule: RULE_1 }
+        ]
+      },
+      cc: {
+        name: "2모둠 (충청도 방언)",
+        words: [
+          { id: 1, cat: "채소/음식", std: "감자", dia: "감재", defaultRule: RULE_1 },
+          { id: 2, cat: "채소/음식", std: "고구마", dia: "고구메", defaultRule: RULE_1 },
+          { id: 3, cat: "채소/음식", std: "옥수수", dia: "강냉이", defaultRule: RULE_3 },
+          { id: 4, cat: "채소/음식", std: "부추", dia: "졸", defaultRule: RULE_3 },
+          { id: 5, cat: "채소/음식", std: "파", dia: "파대기", defaultRule: RULE_2 },
+          { id: 6, cat: "채소/음식", std: "고추", dia: "고추당초", defaultRule: RULE_2 },
+          { id: 7, cat: "채소/음식", std: "무", dia: "무수", defaultRule: RULE_2 },
+          { id: 8, cat: "채소/음식", std: "배추", dia: "배차", defaultRule: RULE_1 },
+          { id: 9, cat: "채소/음식", std: "상추", dia: "상치", defaultRule: RULE_1 },
+          { id: 10, cat: "채소/음식", std: "간장", dia: "간장물", defaultRule: RULE_2 },
+          { id: 11, cat: "채소/음식", std: "두부", dia: "두부랑", defaultRule: RULE_2 },
+          { id: 12, cat: "채소/음식", std: "김치", dia: "짐치", defaultRule: RULE_2 },
+          { id: 13, cat: "채소/음식", std: "누룽지", dia: "눌은밥", defaultRule: RULE_3 },
+          { id: 14, cat: "채소/음식", std: "보리", dia: "보리쌀", defaultRule: RULE_2 },
+          { id: 15, cat: "동물/곤충", std: "강아지", dia: "강생이", defaultRule: RULE_3 },
+          { id: 16, cat: "동물/곤충", std: "고양이", dia: "괴비", defaultRule: RULE_3 },
+          { id: 17, cat: "동물/곤충", std: "송아지", dia: "송애기", defaultRule: RULE_1 },
+          { id: 18, cat: "동물/곤충", std: "병아리", dia: "삥아리", defaultRule: RULE_1 },
+          { id: 19, cat: "동물/곤충", std: "개구리", dia: "개구락지", defaultRule: RULE_2 },
+          { id: 20, cat: "동물/곤충", std: "지렁이", dia: "지렁쿠", defaultRule: RULE_2 },
+          { id: 21, cat: "동물/곤충", std: "하루살이", dia: "하루살개", defaultRule: RULE_2 },
+          { id: 22, cat: "동물/곤충", std: "우렁이", dia: "우렁", defaultRule: RULE_2 },
+          { id: 23, cat: "동물/곤충", std: "다슬기", dia: "올갱이", defaultRule: RULE_3 },
+          { id: 24, cat: "동물/곤충", std: "매미", dia: "매암이", defaultRule: RULE_2 },
+          { id: 25, cat: "동물/곤충", std: "여우", dia: "여수", defaultRule: RULE_2 },
+          { id: 26, cat: "생활/자연", std: "가위", dia: "가새", defaultRule: RULE_1 },
+          { id: 27, cat: "생활/자연", std: "그네", dia: "군디", defaultRule: RULE_3 },
+          { id: 28, cat: "생활/자연", std: "주머니", dia: "주머구", defaultRule: RULE_2 },
+          { id: 29, cat: "생활/자연", std: "그늘", dia: "그늘짝", defaultRule: RULE_2 },
+          { id: 30, cat: "생활/자연", std: "거미", dia: "거무", defaultRule: RULE_1 }
+        ]
+      },
+      jl: {
+        name: "3모둠 (전라도 방언)",
+        words: [
+          { id: 1, cat: "채소/음식", std: "감자", dia: "하지감자", defaultRule: RULE_2 },
+          { id: 2, cat: "채소/음식", std: "고구마", dia: "감자", defaultRule: RULE_3 },
+          { id: 3, cat: "채소/음식", std: "옥수수", dia: "강낭", defaultRule: RULE_3 },
+          { id: 4, cat: "채소/음식", std: "부추", dia: "솔", defaultRule: RULE_3 },
+          { id: 5, cat: "채소/음식", std: "파", dia: "파대기", defaultRule: RULE_2 },
+          { id: 6, cat: "채소/음식", std: "고추", dia: "고치", defaultRule: RULE_1 },
+          { id: 7, cat: "채소/음식", std: "무", dia: "무시", defaultRule: RULE_2 },
+          { id: 8, cat: "채소/음식", std: "배추", dia: "배차", defaultRule: RULE_1 },
+          { id: 9, cat: "채소/음식", std: "상추", dia: "상치", defaultRule: RULE_1 },
+          { id: 10, cat: "채소/음식", std: "간장", dia: "장물", defaultRule: RULE_3 },
+          { id: 11, cat: "채소/음식", std: "두부", dia: "조포", defaultRule: RULE_3 },
+          { id: 12, cat: "채소/음식", std: "김치", dia: "짐치", defaultRule: RULE_2 },
+          { id: 13, cat: "채소/음식", std: "누룽지", dia: "누름밥", defaultRule: RULE_2 },
+          { id: 14, cat: "채소/음식", std: "보리", dia: "보리쌀", defaultRule: RULE_2 },
+          { id: 15, cat: "동물/곤충", std: "강아지", dia: "강생이", defaultRule: RULE_3 },
+          { id: 16, cat: "동물/곤충", std: "고양이", dia: "괭이", defaultRule: RULE_1 },
+          { id: 17, cat: "동물/곤충", std: "송아지", dia: "송아치", defaultRule: RULE_2 },
+          { id: 18, cat: "동물/곤충", std: "병아리", dia: "삥아리", defaultRule: RULE_1 },
+          { id: 19, cat: "동물/곤충", std: "개구리", dia: "개구락지", defaultRule: RULE_2 },
+          { id: 20, cat: "동물/곤충", std: "지렁이", dia: "지렝이", defaultRule: RULE_1 },
+          { id: 21, cat: "동물/곤충", std: "하루살이", dia: "파리모기", defaultRule: RULE_3 },
+          { id: 22, cat: "동물/곤충", std: "우렁이", dia: "골뱅이", defaultRule: RULE_3 },
+          { id: 23, cat: "동물/곤충", std: "다슬기", dia: "대사리", defaultRule: RULE_3 },
+          { id: 24, cat: "동물/곤충", std: "매미", dia: "매암이", defaultRule: RULE_2 },
+          { id: 25, cat: "동물/곤충", std: "여우", dia: "여시", defaultRule: RULE_1 },
+          { id: 26, cat: "생활/자연", std: "가위", dia: "가시개", defaultRule: RULE_2 },
+          { id: 27, cat: "생활/자연", std: "그네", dia: "그네줄", defaultRule: RULE_2 },
+          { id: 28, cat: "생활/자연", std: "주머니", dia: "호주머니", defaultRule: RULE_2 },
+          { id: 29, cat: "생활/자연", std: "그늘", dia: "그늘막", defaultRule: RULE_2 },
+          { id: 30, cat: "생활/자연", std: "거미", dia: "거무", defaultRule: RULE_1 }
+        ]
+      },
+      gs: {
+        name: "4모둠 (경상도 방언)",
+        words: [
+          { id: 1, cat: "채소/음식", std: "감자", dia: "감재", defaultRule: RULE_1 },
+          { id: 2, cat: "채소/음식", std: "고구마", dia: "고구메", defaultRule: RULE_1 },
+          { id: 3, cat: "채소/음식", std: "옥수수", dia: "강냉이", defaultRule: RULE_3 },
+          { id: 4, cat: "채소/음식", std: "부추", dia: "정구지", defaultRule: RULE_3 },
+          { id: 5, cat: "채소/음식", std: "파", dia: "패", defaultRule: RULE_1 },
+          { id: 6, cat: "채소/음식", std: "고추", dia: "고치", defaultRule: RULE_1 },
+          { id: 7, cat: "채소/음식", std: "무", dia: "무시", defaultRule: RULE_2 },
+          { id: 8, cat: "채소/음식", std: "배추", dia: "배차", defaultRule: RULE_1 },
+          { id: 9, cat: "채소/음식", std: "상추", dia: "상치", defaultRule: RULE_1 },
+          { id: 10, cat: "채소/음식", std: "간장", dia: "지렁", defaultRule: RULE_3 },
+          { id: 11, cat: "채소/음식", std: "두부", dia: "조포", defaultRule: RULE_3 },
+          { id: 12, cat: "채소/음식", std: "김치", dia: "디히", defaultRule: RULE_3 },
+          { id: 13, cat: "채소/음식", std: "누룽지", dia: "소태", defaultRule: RULE_3 },
+          { id: 14, cat: "채소/음식", std: "보리", dia: "보리쌀", defaultRule: RULE_2 },
+          { id: 15, cat: "동물/곤충", std: "강아지", dia: "강생이", defaultRule: RULE_3 },
+          { id: 16, cat: "동물/곤충", std: "고양이", dia: "고이", defaultRule: RULE_2 },
+          { id: 17, cat: "동물/곤충", std: "송아지", dia: "송아치", defaultRule: RULE_2 },
+          { id: 18, cat: "동물/곤충", std: "병아리", dia: "삐약이", defaultRule: RULE_3 },
+          { id: 19, cat: "동물/곤충", std: "개구리", dia: "개구락지", defaultRule: RULE_2 },
+          { id: 20, cat: "동물/곤충", std: "지렁이", dia: "지렁구", defaultRule: RULE_2 },
+          { id: 21, cat: "동물/곤충", std: "하루살이", dia: "날파리", defaultRule: RULE_3 },
+          { id: 22, cat: "동물/곤충", std: "우렁이", dia: "고디", defaultRule: RULE_3 },
+          { id: 23, cat: "동물/곤충", std: "다슬기", dia: "고디", defaultRule: RULE_3 },
+          { id: 24, cat: "동물/곤충", std: "매미", dia: "매미충", defaultRule: RULE_2 },
+          { id: 25, cat: "동물/곤충", std: "여우", dia: "여시", defaultRule: RULE_1 },
+          { id: 26, cat: "생활/자연", std: "가위", dia: "가시개", defaultRule: RULE_2 },
+          { id: 27, cat: "생활/자연", std: "그네", dia: "구리", defaultRule: RULE_3 },
+          { id: 28, cat: "생활/자연", std: "주머니", dia: "호박단추", defaultRule: RULE_3 },
+          { id: 29, cat: "생활/자연", std: "그늘", dia: "응달", defaultRule: RULE_3 },
+          { id: 30, cat: "생활/자연", std: "거미", dia: "거무", defaultRule: RULE_1 }
+        ]
+      },
+      jj: {
+        name: "5모둠 (제주도 방언)",
+        words: [
+          { id: 1, cat: "채소/음식", std: "감자", dia: "지슬", defaultRule: RULE_3 },
+          { id: 2, cat: "채소/음식", std: "고구마", dia: "감저", defaultRule: RULE_3 },
+          { id: 3, cat: "채소/음식", std: "옥수수", dia: "대죽", defaultRule: RULE_3 },
+          { id: 4, cat: "채소/음식", std: "부추", dia: "세우리", defaultRule: RULE_3 },
+          { id: 5, cat: "채소/음식", std: "파", dia: "파리", defaultRule: RULE_2 },
+          { id: 6, cat: "채소/음식", std: "고추", dia: "고치", defaultRule: RULE_1 },
+          { id: 7, cat: "채소/음식", std: "무", dia: "나미", defaultRule: RULE_3 },
+          { id: 8, cat: "채소/음식", std: "배추", dia: "배치", defaultRule: RULE_1 },
+          { id: 9, cat: "채소/음식", std: "상추", dia: "부루", defaultRule: RULE_3 },
+          { id: 10, cat: "채소/음식", std: "간장", dia: "곤장", defaultRule: RULE_1 },
+          { id: 11, cat: "채소/음식", std: "두부", dia: "둠비", defaultRule: RULE_2 },
+          { id: 12, cat: "채소/음식", std: "김치", dia: "짐치", defaultRule: RULE_2 },
+          { id: 13, cat: "채소/음식", std: "누룽지", dia: "눌은밥", defaultRule: RULE_3 },
+          { id: 14, cat: "채소/음식", std: "보리", dia: "버리", defaultRule: RULE_1 },
+          { id: 15, cat: "동물/곤충", std: "강아지", dia: "강생이", defaultRule: RULE_3 },
+          { id: 16, cat: "동물/곤충", std: "고양이", dia: "고냉이", defaultRule: RULE_2 },
+          { id: 17, cat: "동물/곤충", std: "송아지", dia: "송애기", defaultRule: RULE_1 },
+          { id: 18, cat: "동물/곤충", std: "병아리", dia: "빙애기", defaultRule: RULE_1 },
+          { id: 19, cat: "동물/곤충", std: "개구리", dia: "개구락지", defaultRule: RULE_2 },
+          { id: 20, cat: "동물/곤충", std: "지렁이", dia: "지렝이", defaultRule: RULE_1 },
+          { id: 21, cat: "동물/곤충", std: "하루살이", dia: "파리모기", defaultRule: RULE_3 },
+          { id: 22, cat: "동물/곤충", std: "우렁이", dia: "골갱이", defaultRule: RULE_2 },
+          { id: 23, cat: "동물/곤충", std: "다슬기", dia: "대사리", defaultRule: RULE_3 },
+          { id: 24, cat: "동물/곤충", std: "매미", dia: "암매", defaultRule: RULE_3 },
+          { id: 25, cat: "동물/곤충", std: "여우", dia: "여시", defaultRule: RULE_1 },
+          { id: 26, cat: "생활/자연", std: "가위", dia: "가새", defaultRule: RULE_1 },
+          { id: 27, cat: "생활/자연", std: "그네", dia: "그늘", defaultRule: RULE_2 },
+          { id: 28, cat: "생활/자연", std: "주머니", dia: "개화주머니", defaultRule: RULE_2 },
+          { id: 29, cat: "생활/자연", std: "그늘", dia: "그늘찌", defaultRule: RULE_2 },
+          { id: 30, cat: "생활/자연", std: "거미", dia: "거미충", defaultRule: RULE_2 }
+        ]
+      }
+    };
+
+    // =========================================================================
+    // 🧠 표준어 편향 사전 학습 AI 모델 (Standard-Biased Pretrained ML)
+    // =========================================================================
+    const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+    const JUNG = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+    const JONG = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+
+    const PRETRAINED_STANDARD_CORPUS = [
+      "대파", "양파", "마늘", "복숭아", "보석", "보자기", "옥수수", "일시정지", "정지선",
+      "단무지", "단추", "하영이", "하마", "거위", "거울", "식빵", "시계", "미역", "미술",
+      "마시멜로", "가시나무", "가방", "가마솥", "우유", "우산", "기차", "기름", "아이스크림",
+      "사탕", "사과", "수박", "바나나", "포도", "토마토", "호랑이", "고래", "구름", "나무",
+      "나비", "노래", "다람쥐", "도토리", "두더지", "모자", "무지개", "붕어빵", "자전거",
+      "자동차", "초콜릿", "카메라", "코끼리", "파인애플", "폭탄", "맨발", "아기", "제비",
+      "벌집", "고구마", "감자", "강아지", "고양이", "선풍기", "냉장고", "텔레비전", "컴퓨터"
+    ];
+
+    const KNOWN_STANDARD_WORDS = new Set([
+      ...PRETRAINED_STANDARD_CORPUS,
+      "회오리", "얼음", "하나", "둘", "셋", "한개", "두개", "세개", "할머니", "할아버지", "할매", "할매요", "할망",
+      "엄마", "아빠", "선생님", "친구", "동생", "형", "누나", "언니", "오빠", "아저씨", "아주머니",
+      "우리", "나", "너", "저", "여러분", "사람", "집", "집에", "학교", "교실", "방", "방에", "부엌", "마당", "마당에", "마당에서",
+      "창문", "창문에", "밖에", "옆에", "옆에서", "붙은", "강물에서", "냇가에서", "시원한", "노란", "고소한", "앉아서",
+      "편의점", "시장", "마트", "병원", "공원", "길", "산", "바다", "강", "하늘", "땅", "물", "불",
+      "바람", "비", "눈", "날씨", "오늘", "내일", "어제", "지금", "아까", "나중에", "아침", "점심", "저녁", "저녁에",
+      "밥", "국", "반찬", "김밥", "떡볶이", "라면", "빵", "호빵", "찐빵", "과자", "음식", "요리",
+      "이", "그", "저", "이거", "그거", "저거", "이것", "그것", "저것", "여기", "거기", "저기", "어디", "어디로",
+      "좀", "더", "덜", "많이", "조금", "살짝", "얼른", "빨리", "천천히", "잘", "못", "안", "꼭",
+      "참", "정말", "진짜", "너무", "매우", "아주", "가장", "제일", "같이", "함께", "혼자", "다", "모두", "아이고",
+      "그리고", "그래서", "그러나", "하지만", "그런데", "또", "또는", "혹시", "만약", "왜", "어떻게",
+      "잡아", "잡아서", "잡고", "잡았다", "먹어", "먹고", "먹자", "먹었다", "먹었어", "먹어요", "맛있게", "넣고",
+      "봐", "보고", "보자", "봤다", "봤어요", "봐요", "봐주세요", "가", "가고", "가자", "갔다", "갔어", "가요", "와", "오고", "오자", "왔다", "와요",
+      "해", "하고", "하자", "했다", "해요", "줘", "주고", "주자", "줬다", "줘요", "주세요", "주세용", "주십시오", "구경해요",
+      "살려", "도와", "찾아", "찾아요", "만들어", "구워", "삶아", "볶아", "끓여", "데워", "치워", "열어", "닫아", "들어가서", "숨었어요", "타다가",
+      "입어", "벗어", "신어", "씻어", "자", "자고", "자요", "일어나", "앉아", "서", "뛰어", "걸어", "놀아", "놀아요", "날아다녀요", "돌아다녀요",
+      "웃어", "울어", "읽어", "써", "그려", "사", "사고", "팔아", "넣어", "빼", "꺼내", "올려", "내려", "좋아해요",
+      "예쁜", "예뻐", "예뻐요", "멋진", "멋져", "멋져요", "좋은", "좋아", "좋아요", "나쁜", "나빠", "나빠요", "신선해요",
+      "큰", "커", "커요", "작은", "작아", "작아요", "많은", "많아", "많아요", "적은", "적어", "적어요",
+      "맛있는", "맛있어", "맛있어요", "맛있네", "맛없는", "맛없어", "따뜻한", "따뜻해", "차가운", "차가워",
+      "더운", "더워", "추운", "추워", "매운", "매워", "달콤한", "달아", "짠", "짜", "싱거운", "싱거워",
+      "무서운", "무서워", "귀여운", "귀여워", "재미있는", "재미있어", "심심해", "배고파", "배불러",
+      "있어", "있어요", "있습니다", "있는", "없어", "없어요", "없습니다", "같아", "같아요", "달라", "달라요"
+    ]);
+
+    class StandardBiasedMLModel {
+      constructor() {
+        this.learnedDialects = [];
+        this.pretrainedVectors = [];
+        this.ruleWeights = { vowel: 1.0, cons: 1.0, diff: 1.0 };
+        this.initPretrainedCorpus();
+      }
+
+      decompose(str) {
+        const jamos = [];
+        const chos = [];
+        const jungs = [];
+        for (let i = 0; i < str.length; i++) {
+          const code = str.charCodeAt(i);
+          if (code >= 0xAC00 && code <= 0xD7A3) {
+            const offset = code - 0xAC00;
+            const c = Math.floor(offset / 588);
+            const v = Math.floor((offset % 588) / 28);
+            const f = offset % 28;
+            chos.push(CHO[c]);
+            jungs.push(JUNG[v]);
+            jamos.push(CHO[c], JUNG[v]);
+            if (f !== 0) jamos.push(JONG[f]);
+          } else {
+            jamos.push(str[i]);
+          }
+        }
+        return { jamos, chos, jungs };
+      }
+
+      initPretrainedCorpus() {
+        this.pretrainedVectors = PRETRAINED_STANDARD_CORPUS.map(word => ({
+          word: word,
+          vec: this.decompose(word)
+        }));
+      }
+
+      fitSheetData(sheetWords) {
+        let counts = [1, 1, 1];
+        sheetWords.forEach(w => {
+          if (w.rule.includes("①")) counts[0]++;
+          else if (w.rule.includes("②")) counts[1]++;
+          else if (w.rule.includes("③")) counts[2]++;
+        });
+        const total = counts[0] + counts[1] + counts[2];
+        this.ruleWeights = {
+          vowel: 1 + (counts[0] / total),
+          cons: 1 + (counts[1] / total),
+          diff: 1 + (counts[2] / total)
+        };
+
+        this.learnedDialects = sheetWords.map(w => ({
+          dia: w.dia,
+          std: w.std,
+          rule: w.rule,
+          diaVec: this.decompose(w.dia),
+          stdVec: this.decompose(w.std)
+        }));
+
+        sheetWords.forEach(w => KNOWN_STANDARD_WORDS.add(w.std));
+      }
+
+      isKnownStandardKorean(stem, fullToken) {
+        if (KNOWN_STANDARD_WORDS.has(stem) || KNOWN_STANDARD_WORDS.has(fullToken)) {
+          return true;
+        }
+        const stdEndingRegex = /(어요|아요|해요|여요|습니다|ㅂ니다|네요|군요|지만|아서|어서|여서|니까|려고|면서|다가|던데|잖아|거든|할까|볼까|주라|달라)$/;
+        if (stdEndingRegex.test(stem) || stdEndingRegex.test(fullToken)) {
+          return true;
+        }
+        return false;
+      }
+
+      predictBiasedStandardWord(unknownDialectWord) {
+        const inVec = this.decompose(unknownDialectWord);
+        let bestWord = unknownDialectWord;
+        let maxScore = -999;
+
+        const candidatePool = [
+          ...this.pretrainedVectors,
+          ...this.learnedDialects.map(d => ({ word: d.std, vec: d.stdVec }))
+        ];
+
+        candidatePool.forEach(cand => {
+          let score = 0;
+          if (inVec.chos[0] && cand.vec.chos[0] === inVec.chos[0]) {
+            score += 6.0;
+          }
+          const minChoLen = Math.min(inVec.chos.length, cand.vec.chos.length);
+          for (let i = 0; i < minChoLen; i++) {
+            if (inVec.chos[i] === cand.vec.chos[i]) {
+              score += 4.5 * this.ruleWeights.cons;
+            }
+          }
+          inVec.jamos.forEach(j => {
+            if (cand.vec.jamos.includes(j)) {
+              score += 1.5 * this.ruleWeights.vowel;
+            }
+          });
+          for (let i = 0; i < unknownDialectWord.length; i++) {
+            if (cand.word.includes(unknownDialectWord[i])) {
+              score += 5.0;
+            }
+          }
+          const lenDiff = Math.abs(unknownDialectWord.length - cand.word.length);
+          score -= lenDiff * 3.0;
+
+          if (score > maxScore) {
+            maxScore = score;
+            bestWord = cand.word;
+          }
+        });
+
+        return bestWord;
+      }
+    }
+
+    const aiModel = new StandardBiasedMLModel();
+    let currentRegionKey = "gw";
+    let activeWords = [];
+
+    function goToStage(stageNum) {
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`stage${i}`).classList.toggle("active", i === stageNum);
+      }
+    }
+
+    function classifyTendencyRule(std, dia) {
+      if (!std || !dia) return RULE_1;
+      if (std.length === dia.length) {
+        let same = 0;
+        for (let i = 0; i < std.length; i++) {
+          if (std[i] === dia[i]) same++;
+        }
+        if (same >= std.length - 1) return RULE_1;
+      }
+      if (dia.includes(std[0]) || std.includes(dia[0])) return RULE_2;
+      return RULE_3;
+    }
+
+    function apply10UnclassifiedRule(wordsList) {
+      return wordsList.map((w, idx) => {
+        const autoRule = w.defaultRule || classifyTendencyRule(w.std, w.dia);
+        return {
+          id: w.id,
+          cat: w.cat,
+          std: w.std,
+          dia: w.dia,
+          rule: UNCLASSIFIED_INDICES.has(idx) ? "" : autoRule
+        };
+      });
+    }
+
+    function fetchGoogleSheetViaJsonp(sheetId, gid) {
+      return new Promise((resolve, reject) => {
+        const callbackName = "gvizCallback_" + Math.floor(Math.random() * 1000000);
+        const script = document.createElement("script");
+
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          reject(new Error("Timeout"));
+        }, 6000);
+
+        function cleanup() {
+          clearTimeout(timeoutId);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[callbackName] = function(response) {
+          cleanup();
+          if (!response || response.status === "error" || !response.table) {
+            reject(new Error("Invalid response"));
+            return;
+          }
+
+          const rows = response.table.rows || [];
+          const parsedWords = [];
+
+          rows.forEach(r => {
+            const cells = r.c;
+            if (!cells) return;
+
+            const getVal = (idx) => {
+              if (!cells[idx]) return "";
+              if (cells[idx].f !== undefined && cells[idx].f !== null) return String(cells[idx].f).trim();
+              if (cells[idx].v !== undefined && cells[idx].v !== null) return String(cells[idx].v).trim();
+              return "";
+            };
+
+            const col0 = getVal(0);
+            const num = parseInt(col0, 10);
+            const cat = getVal(1) || "공통";
+            const std = getVal(2);
+            const dia = getVal(3) || "(빈칸)";
+
+            if (!isNaN(num) && num >= 1 && num <= 100 && std && std !== "표준어") {
+              parsedWords.push({
+                id: num,
+                cat: cat,
+                std: std,
+                dia: dia,
+                defaultRule: classifyTendencyRule(std, dia)
+              });
+            }
+          });
+
+          resolve(parsedWords);
+        };
+
+        let url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json;responseHandler:${callbackName}`;
+        if (gid) {
+          url += `&gid=${gid}`;
+        }
+        script.src = url;
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("Script load error"));
+        };
+        document.body.appendChild(script);
+      });
+    }
+
+    async function connectSheetAndGoStage2() {
+      const urlInput = document.getElementById("sheetUrlInput").value.trim();
+      const alertEl = document.getElementById("linkAlertMsg");
+      const loadBtn = document.getElementById("loadSheetBtn");
+      const syncBadge = document.getElementById("syncStatusBadge");
+
+      currentRegionKey = document.getElementById("regionSelect").value;
+      const regionObj = REGION_DATASETS[currentRegionKey];
+
+      if (!urlInput) {
+        alertEl.style.display = "block";
+        alertEl.textContent = "⚠️ 구글 스프레드시트의 [공유] 링크를 복사해서 칸에 붙여넣어 주세요!";
+        return;
+      }
+
+      const match = urlInput.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (!match || !match[1]) {
+        alertEl.style.display = "block";
+        alertEl.textContent = "⚠️ 올바른 구글 스프레드시트 공유 링크(https://docs.google.com/spreadsheets/d/...)를 넣어 주세요!";
+        return;
+      }
+
+      const sheetId = match[1];
+      const gidMatch = urlInput.match(/gid=([0-9]+)/);
+      const gid = gidMatch ? gidMatch[1] : null;
+
+      alertEl.style.display = "none";
+      loadBtn.disabled = true;
+      loadBtn.textContent = "⏳ 구글 스프레드시트에서 실시간으로 단어를 읽어오는 중...";
+
+      document.getElementById("headerRegionText").textContent = regionObj.name;
+      document.getElementById("labInputTitle").textContent = `🎙️ 방언 입력 (${regionObj.name})`;
+
+      try {
+        const liveWords = await fetchGoogleSheetViaJsonp(sheetId, gid);
+        if (liveWords && liveWords.length > 0) {
+          activeWords = apply10UnclassifiedRule(liveWords);
+          syncBadge.style.background = "#dcfce7";
+          syncBadge.style.color = "#166534";
+          syncBadge.textContent = `✅ 구글 시트 실시간 연동 완료! (시트에서 직접 ${liveWords.length}개 단어를 가져왔습니다)`;
+          renderDropdownTable();
+          goToStage(2);
+          loadBtn.disabled = false;
+          loadBtn.textContent = "🚀 시트 데이터 불러오기";
+          return;
+        }
+      } catch (err) {
+        console.warn("실시간 시트 연동 실패:", err);
+      }
+
+      loadBtn.disabled = false;
+      loadBtn.textContent = "🚀 시트 데이터 불러오기";
+      alertEl.style.display = "block";
+      alertEl.innerHTML = "⚠️ 시트 데이터를 가져오지 못했습니다! 구글 시트의 <strong>[공유] 설정이 '링크가 있는 모든 사용자(뷰어 이상)'</strong>로 열려 있는지 확인해 주세요!";
+    }
+
+    function renderDropdownTable() {
+      const tbody = document.getElementById("dataTableBody");
+      tbody.innerHTML = "";
+      const rules = [RULE_1, RULE_2, RULE_3];
+
+      activeWords.forEach((item, idx) => {
+        const isUnclassified = (item.rule === "");
+        const tr = document.createElement("tr");
+        tr.id = `row_${idx}`;
+        if (isUnclassified) tr.className = "unclassified-row";
+
+        tr.innerHTML = `
+          <td>${item.id}</td>
+          <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-size:13px;">${item.cat}</span></td>
+          <td>${item.std}</td>
+          <td style="color:#2563eb; font-weight:800;">${item.dia}</td>
+          <td>
+            <select id="select_${idx}" class="tendency-select ${isUnclassified ? 'needs-input' : ''}" onchange="onRuleChange(${idx}, this.value)">
+              <option value="" ${isUnclassified ? "selected" : ""} disabled>❓ (미분류) - 규칙을 선택하세요</option>
+              ${rules.map(r => `<option value="${r}" ${item.rule === r ? "selected" : ""}>${r}</option>`).join("")}
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      updateRemainingStatus();
+    }
+
+    function onRuleChange(idx, val) {
+      activeWords[idx].rule = val;
+      const tr = document.getElementById(`row_${idx}`);
+      const sel = document.getElementById(`select_${idx}`);
+      if (val !== "") {
+        tr.classList.remove("unclassified-row");
+        sel.classList.remove("needs-input");
+      }
+      document.getElementById("stage2AlertMsg").style.display = "none";
+      updateRemainingStatus();
+    }
+
+    function updateRemainingStatus() {
+      const remaining = activeWords.filter(w => w.rule === "").length;
+      const bar = document.getElementById("missionStatusBar");
+      const text = document.getElementById("missionStatusText");
+
+      if (remaining === 0) {
+        bar.classList.add("all-done");
+        text.innerHTML = "🎉 <strong>10개 모두 분류 완료!</strong> 아래 버튼을 눌러 경향성 분석과 AI 학습을 시작하세요!";
+      } else {
+        bar.classList.remove("all-done");
+        text.innerHTML = `🔍 아직 분류하지 않은 <strong>(미분류)</strong> 단어가 <strong>${remaining}개</strong> 남았어요!`;
+      }
+    }
+
+    function checkDropdownsAndStartTrain() {
+      const firstEmptyIdx = activeWords.findIndex(w => w.rule === "");
+      const alertEl = document.getElementById("stage2AlertMsg");
+
+      if (firstEmptyIdx !== -1) {
+        const remaining = activeWords.filter(w => w.rule === "").length;
+        const emptyWord = activeWords[firstEmptyIdx];
+        alertEl.style.display = "block";
+        alertEl.textContent = `⚠️ 아직 분류하지 않은 단어가 ${remaining}개 남아 있어요! (${emptyWord.id}번 '${emptyWord.std} ➔ ${emptyWord.dia}' 칸을 선택해 주세요)`;
+        const targetRow = document.getElementById(`row_${firstEmptyIdx}`);
+        if (targetRow) targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
+      alertEl.style.display = "none";
+      startAnalysisAndAutoTrain();
+    }
+
+    function startAnalysisAndAutoTrain() {
+      goToStage(3);
+
+      aiModel.fitSheetData(activeWords);
+
+      let counts = [0, 0, 0];
+      activeWords.forEach(item => {
+        if (item.rule.includes("①")) counts[0]++;
+        else if (item.rule.includes("②")) counts[1]++;
+        else counts[2]++;
+      });
+
+      const total = activeWords.length || 1;
+      for (let i = 0; i < 3; i++) {
+        const pct = Math.round((counts[i] / total) * 100);
+        document.getElementById(`statCount${i + 1}`).textContent = `${counts[i]}개 (${pct}%)`;
+        const bar = document.getElementById(`statBar${i + 1}`);
+        bar.style.width = `${pct}%`;
+        bar.textContent = pct > 8 ? `${pct}%` : "";
+      }
+
+      const fillEl = document.getElementById("trainProgressFill");
+      const msgEl = document.getElementById("trainStatusMsg");
+      const subEl = document.getElementById("trainSubLog");
+      const goBtn = document.getElementById("goLabBtn");
+
+      fillEl.style.width = "0%";
+      goBtn.style.display = "none";
+
+      const steps = [
+        { pct: 30, msg: "📊 방언 경향성 규칙 가중치 계산 완료!", sub: `표준어 AI 모델에 시트 방언 ${activeWords.length}개를 연결 중...` },
+        { pct: 65, msg: "🧠 음절(초·중·종성) 매칭 신경망 학습 중...", sub: "시트에 있는 방언과 표준어 짝꿍을 기억하고 있습니다..." },
+        { pct: 95, msg: "⚡ AI 방언 번역 모델 생성 완료!", sub: "이제 번역 실험실에서 테스트할 수 있습니다." },
+        { pct: 100, msg: "✅ 우리 모둠 전용 AI 번역 모델 학습 완료!", sub: "아래 초록색 버튼을 눌러 번역 실험실로 이동하세요!" }
+      ];
+
+      steps.forEach((st, idx) => {
+        setTimeout(() => {
+          fillEl.style.width = st.pct + "%";
+          msgEl.textContent = st.msg;
+          subEl.textContent = st.sub;
+          if (idx === steps.length - 1) {
+            document.getElementById("stage3Title").textContent = "경향성 분석과 AI 기계 학습이 모두 끝났어요! 🎉";
+            goBtn.style.display = "inline-flex";
+          }
+        }, (idx + 1) * 800);
+      });
+    }
+
+    function resetTranslator() {
+      document.getElementById("dialectInput").value = "";
+      const outEl = document.getElementById("translationOutput");
+      outEl.style.color = "#94a3b8";
+      outEl.style.fontSize = "22px";
+      outEl.textContent = "번역할 문장을 입력하고 [번역 실행하기] 버튼을 눌러 주세요.";
+    }
+
+    function splitStemAndJosa(wordWithPunc) {
+      const puncMatch = wordWithPunc.match(/[?!~.,]+$/);
+      const punc = puncMatch ? puncMatch[0] : "";
+      const clean = punc ? wordWithPunc.slice(0, -punc.length) : wordWithPunc;
+
+      const josaList = ["이랑", "하고", "에서", "으로", "부터", "까지", "랑", "와", "과", "을", "를", "이", "가", "은", "는", "에", "도", "만", "로", "요"];
+      for (let j of josaList) {
+        if (clean.length > j.length && clean.endsWith(j)) {
+          const stem = clean.slice(0, -j.length);
+          const isWholeInSheet = activeWords.some(w => w.dia === clean || w.std === clean);
+          const isWholeInStd = KNOWN_STANDARD_WORDS.has(clean);
+          if (!isWholeInSheet && !isWholeInStd) {
+            return { stem, josa: j, punc, clean };
+          }
+        }
+      }
+      return { stem: clean, josa: "", punc, clean };
+    }
+
+    function runTranslation() {
+      const rawInput = document.getElementById("dialectInput").value.trim();
+      const outEl = document.getElementById("translationOutput");
+
+      if (!rawInput) {
+        outEl.style.color = "#64748b";
+        outEl.style.fontSize = "22px";
+        outEl.textContent = "번역할 방언 단어나 문장을 먼저 입력해 주세요.";
+        return;
+      }
+
+      let preprocessed = rawInput
+        .replace(/할매요/g, "할머니")
+        .replace(/할매/g, "할머니")
+        .replace(/할망/g, "할머니")
+        .replace(/봐주쇼([!~.?]*)$/g, "봐주세요$1")
+        .replace(/주소([!~.?]*)$/g, "주세요$1")
+        .replace(/주이소([!~.?]*)$/g, "주세요$1")
+        .replace(/주유([!~.?]*)$/g, "주세요$1")
+        .replace(/주쇼([!~.?]*)$/g, "주세요$1")
+        .replace(/구마잉([!~.?]*)$/g, "군요$1")
+        .replace(/드래요([!~.?]*)$/g, "대요$1")
+        .replace(/이수다([!~.?]*)$/g, "있습니다$1")
+        .replace(/해부러요([!~.?]*)$/g, "해버려요$1");
+
+      const tokens = preprocessed.split(/\s+/);
+
+      const translatedTokens = tokens.map(token => {
+        const { stem, josa, punc, clean } = splitStemAndJosa(token);
+        if (!stem) return token;
+
+        // 1순위: 시트에서 직접 가져온 방언(dia)과 일치하면 시트의 표준어(std)로 번역
+        const exactDia = activeWords.find(w => w.dia === stem || w.dia === clean);
+        if (exactDia) {
+          return (exactDia.dia === clean) ? exactDia.std + punc : exactDia.std + josa + punc;
+        }
+
+        // 2순위: 어절 내부에 시트 방언(2글자 이상)이 포함된 경우 치환
+        const sortedSheet = [...activeWords].sort((a, b) => b.dia.length - a.dia.length);
+        for (let w of sortedSheet) {
+          if (w.dia.length >= 2 && stem.includes(w.dia)) {
+            return stem.replace(w.dia, w.std) + josa + punc;
+          }
+        }
+
+        // 3순위: 표준어 사전(KNOWN_STANDARD_WORDS)에 있거나 표준어 용언 활용형이면 그대로 보존
+        if (aiModel.isKnownStandardKorean(stem, clean)) {
+          return token;
+        }
+
+        // 4순위: "얼음보숭이" 등 합성어 처리
+        if (stem.startsWith("얼음") && stem.length > 2) {
+          const rest = stem.slice(2);
+          const predictedStd = aiModel.predictBiasedStandardWord(rest);
+          return "얼음" + predictedStd + josa + punc;
+        }
+
+        // 5순위: 시트에 없는 미학습 방언 -> 표준어 사전 중 발음이 가장 유사한 표준어로 착각하여 반환!
+        const biasedStd = aiModel.predictBiasedStandardWord(stem);
+        return biasedStd + josa + punc;
+      });
+
+      const finalSentence = translatedTokens.join(" ");
+
+      outEl.style.color = "#1e3a8a";
+      outEl.style.fontSize = "30px";
+      outEl.textContent = `"${finalSentence}"`;
+    }
+  </script>
+</body>
+</html>
